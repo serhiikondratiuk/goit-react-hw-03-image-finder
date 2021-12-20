@@ -46,7 +46,9 @@
     "lint-staged": "^12.1.2",
     "nanoid": "^3.1.30",
     "prettier": "^2.5.1",
-    "prop-types": "^15.7.2"
+    "prop-types": "^15.7.2",
+    "react-loader-spinner": "^4.0.0",
+    "react-toastify": "^8.1.0"
   },
   "lint-staged": {
     "*.{js,jsx}": "eslint --cache --fix",
