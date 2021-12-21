@@ -24,27 +24,36 @@ class ImageGallery extends Component {
   componentDidUpdate(prevProps, prevState) {
     const { searchQuery, page } = this.state;
 
-    if (prevState.searchQuery !== searchQuery || prevState.page < page) {
+    if (prevState.searchQuery !== searchQuery) {
       this.setState({ status: "pending" });
-
-      API.fetchImage(searchQuery, page)
-        .then(({ hits }) => {
-          if (hits.length === 0) {
-            toast.warning(`There is no ${searchQuery} found`);
-          }
-          return this.setState(({ gallery }) => ({
-            gallery: [...gallery, ...hits],
-            status: "resolved",
-          }));
-        })
-        .catch((error) => this.setState({ error, status: "rejected" }));
+      this.fetchImages();
     }
   }
 
+  fetchImages = () => {
+    const { searchQuery, page } = this.state;
+
+    API.fetchImage(searchQuery, page)
+      .then(({ hits }) => {
+        if (hits.length === 0) {
+          toast.warning(`There is no ${searchQuery} found`);
+        }
+        if (hits.length > 0) {
+          toast.success(`New ${searchQuery} found!`);
+        }
+        this.setState(({ gallery, page }) => ({
+          gallery: [...gallery, ...hits],
+          status: "resolved",
+          page: page + 1,
+        }));
+      })
+      .catch((error) => this.setState({ error, status: "rejected" }))
+      .finally(() => {
+        this.handleLoadMoreButton();
+      });
+  };
+
   handleLoadMoreButton = () => {
-    this.setState(({ page }) => ({
-      page: page + 1,
-    }));
     const options = {
       top: null,
       behavior: "smooth",
@@ -81,6 +90,7 @@ class ImageGallery extends Component {
   handleFormSubmit = (searchQuery) => {
     this.setState({ searchQuery, page: 1, gallery: [] });
   };
+
   render() {
     const { gallery, error, status, showModal, modalUrl, modalAlt } =
       this.state;
@@ -105,7 +115,7 @@ class ImageGallery extends Component {
               />
             )}
             {gallery.length >= 12 && (
-              <LoadMoreButton onClick={this.handleLoadMoreButton} />
+              <LoadMoreButton onClick={this.fetchImages} />
             )}
           </>
         )}
