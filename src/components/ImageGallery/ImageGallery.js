@@ -7,6 +7,7 @@ import NewLoader from "../Loader";
 import API from "../../services/imageFinderApi";
 import LoadMoreButton from "../Button";
 import Modal from "../Modal";
+import Searchbar from "../Searchbar";
 
 class ImageGallery extends Component {
   state = {
@@ -15,36 +16,60 @@ class ImageGallery extends Component {
     error: null,
     status: "idle",
     showModal: false,
+    modalUrl: "",
+    modalAlt: "",
+    searchQuery: "",
   };
 
   componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevProps.query;
-    const nextQuery = this.props.query;
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
+    const { searchQuery, page } = this.state;
 
-    if (prevQuery !== nextQuery || prevPage < nextPage) {
+    if (prevState.searchQuery !== searchQuery || prevState.page < page) {
       this.setState({ status: "pending" });
 
-      API.fetchImage(nextQuery, this.state.page)
-        .then(({ hits }) =>
-          this.setState(({ gallery }) => ({
+      API.fetchImage(searchQuery, page)
+        .then(({ hits }) => {
+          if (hits.length === 0) {
+            toast.warning(`There is no ${searchQuery} found`);
+          }
+          return this.setState(({ gallery }) => ({
             gallery: [...gallery, ...hits],
             status: "resolved",
-          }))
-        )
+          }));
+        })
         .catch((error) => this.setState({ error, status: "rejected" }));
     }
   }
-
-  // handleNewGallary = () => {
-  //   this.setState({ gallery: [] });
-  // };
 
   handleLoadMoreButton = () => {
     this.setState(({ page }) => ({
       page: page + 1,
     }));
+    const options = {
+      top: null,
+      behavior: "smooth",
+    };
+    options.top =
+      window.pageYOffset + document.documentElement.clientHeight - 150;
+    setTimeout(() => {
+      window.scrollTo(options);
+    }, 1000);
+  };
+
+  onImageClick = (e) => {
+    e.preventDefault();
+    const imageModal = e.target.getAttribute("data-src");
+    const altModal = e.target.getAttribute("alt");
+
+    if (e.target.nodeName !== "IMG") {
+      return;
+    }
+
+    this.setState({
+      showModal: true,
+      modalUrl: imageModal,
+      modalAlt: altModal,
+    });
   };
 
   toggleModal = () => {
@@ -53,40 +78,39 @@ class ImageGallery extends Component {
     }));
   };
 
+  handleFormSubmit = (searchQuery) => {
+    this.setState({ searchQuery, page: 1, gallery: [] });
+  };
   render() {
-    const { gallery, error, status, showModal } = this.state;
-
-    if (status === "idle") {
-      return <h1>Enter anything you are looking for</h1>;
-    }
-
-    if (status === "pending") {
-      return <NewLoader />;
-    }
-
-    if (status === "rejected") {
-      return toast.error(`${error.message}`);
-    }
-
-    if (status === "resolved") {
-      return (
-        <>
-          <ul className={s.ImageGallery}>
-            {gallery.map((elem) => (
-              <ImageGalleryItem
-                key={elem.id}
-                item={elem}
-                onClick={this.toggleModal}
+    const { gallery, error, status, showModal, modalUrl, modalAlt } =
+      this.state;
+    return (
+      <>
+        <Searchbar onSubmit={this.handleFormSubmit} />
+        {status === "idle" && <h1>Enter anything you are looking for</h1>}
+        {status === "pending" && <NewLoader />}
+        {status === "rejected" && toast.error(`${error.message}`)}
+        {status === "resolved" && (
+          <>
+            <ul className={s.ImageGallery} onClick={this.onImageClick}>
+              {gallery.map((elem) => (
+                <ImageGalleryItem key={elem.id} item={elem} />
+              ))}
+            </ul>
+            {showModal && (
+              <Modal
+                modalUrl={modalUrl}
+                modalAlt={modalAlt}
+                onToggle={this.toggleModal}
               />
-            ))}
-          </ul>
-          {gallery.length >= 12 && (
-            <LoadMoreButton onClick={this.handleLoadMoreButton} />
-          )}
-          ,{showModal && <Modal onToggle={this.toggleModal} />}
-        </>
-      );
-    }
+            )}
+            {gallery.length >= 12 && (
+              <LoadMoreButton onClick={this.handleLoadMoreButton} />
+            )}
+          </>
+        )}
+      </>
+    );
   }
 }
 

@@ -1,9 +1,13 @@
-// import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 import s from "./Searchbar.module.css";
 import { Component } from "react";
 import { toast } from "react-toastify";
 
 class Searchbar extends Component {
+  static propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };
+
   state = {
     searchQuery: "",
   };
