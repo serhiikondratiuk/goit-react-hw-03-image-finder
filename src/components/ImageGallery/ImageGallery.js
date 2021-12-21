@@ -54,15 +54,18 @@ class ImageGallery extends Component {
   };
 
   handleLoadMoreButton = () => {
-    const options = {
-      top: null,
-      behavior: "smooth",
-    };
-    options.top =
-      window.pageYOffset + document.documentElement.clientHeight - 150;
-    setTimeout(() => {
-      window.scrollTo(options);
-    }, 1000);
+    const { page } = this.state;
+    if (page > 2) {
+      const options = {
+        top: null,
+        behavior: "smooth",
+      };
+      options.top =
+        window.pageYOffset + document.documentElement.clientHeight - 150;
+      setTimeout(() => {
+        window.scrollTo(options);
+      }, 1000);
+    }
   };
 
   onImageClick = (e) => {
