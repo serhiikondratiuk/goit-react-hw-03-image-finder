@@ -22,7 +22,7 @@ class ImageGallery extends Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
+    const { searchQuery } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
       this.setState({ status: "pending" });
